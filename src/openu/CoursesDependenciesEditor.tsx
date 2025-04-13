@@ -25,13 +25,35 @@ function CourseDependencyEditor({courses, setCourses, courseId}: {
         setCourses(courses.map(originalCourse => originalCourse.id === courseId ? c : originalCourse));
     }
 
+    function doesRecursivelyRequire(maybeRequires: Course): boolean {
+        let toCheckQueue = [maybeRequires];
+
+        while (toCheckQueue.length > 0) {
+            const dependencies = toCheckQueue.flatMap(
+                course => course.dependencies.map(
+                    depId => courses.find(c => c.id === depId)!
+                )
+            );
+
+            for (const toCheck of toCheckQueue) {
+                if (toCheck.id === course.id) {
+                    return true;
+                }
+            }
+
+            toCheckQueue = dependencies;
+        }
+
+        return false;
+    }
+
     return (
         <Autocomplete
             multiple
             disableCloseOnSelect
             limitTags={2}
             fullWidth
-            options={courses}
+            options={courses.filter(currentCourse => !doesRecursivelyRequire(currentCourse))}
             value={course.dependencies.map(depId => courses.find(c => c.id === depId))}
             getOptionLabel={option => option!.toString()}
             size="small"
