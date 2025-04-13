@@ -9,7 +9,12 @@ import {
 import {Max} from "./z3-utils.ts";
 import {Dispatch, SetStateAction} from "react";
 
-
+export enum ScheduleState {
+    Uninitialized = "יש ללחוץ על 'חשב שנית'",
+    Solving = "מנסים לפתור, רק רגע...",
+    Unsat = "בלתי פתיר",
+    Sat = "נפתר",
+}
 
 export async function solveSchedule(
     {semesters, coursesState, setCoursesState, maxSemesterDifficulty, maxCoursesPerSemester}: {
@@ -19,7 +24,7 @@ export async function solveSchedule(
         maxSemesterDifficulty: Difficulty,
         maxCoursesPerSemester: number
     }
-) {
+): Promise<ScheduleState> {
     const courses = coursesState.map(course => new Course(
         course.id,
         course.name,
@@ -52,7 +57,7 @@ export async function solveSchedule(
     );
 
     if (await solver.check() == "unsat") {
-        return "unsat";
+        return ScheduleState.Unsat;
     }
 
     const model = solver.model();
@@ -63,5 +68,5 @@ export async function solveSchedule(
     })
     setCoursesState(courses);
 
-    return "sat";
+    return ScheduleState.Sat;
 }

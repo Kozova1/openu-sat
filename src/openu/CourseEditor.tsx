@@ -1,6 +1,14 @@
 import {Course, YearPart} from "./types.ts";
 import {ChangeEvent, Dispatch, SetStateAction} from "react";
-import {Checkbox, FormControlLabel, FormGroup, Rating, Stack, styled, TextField, Typography} from "@mui/material";
+import {
+    Checkbox,
+    FormControlLabel,
+    FormGroup, Grid,
+    Rating,
+    styled,
+    TextField,
+    Typography
+} from "@mui/material";
 
 const StyledRating = styled(Rating)({
     '& .MuiRating-iconFilled': {
@@ -19,11 +27,12 @@ export default function CourseEditor(
     }) {
 
     const course = courses[courseIndex];
+
     function setCourse(c: Course) {
         setCourses(courses.map((originalCourse, i) =>
             i === courseIndex
-            ? c
-            : originalCourse
+                ? c
+                : originalCourse
         ));
     }
 
@@ -56,7 +65,7 @@ export default function CourseEditor(
     }
 
     return (
-        <Stack direction="row" spacing={2}>
+        <Grid container spacing={2}>
             <TextField size="small" variant="outlined" label="מספר הקורס" value={course.id} onChange={event => {
                 setCourse(new Course(
                     event.target.value,
@@ -80,11 +89,11 @@ export default function CourseEditor(
                 max={10}
                 value={course.difficulty}
                 onChange={
-                    (_, newDifficulty)=> {
+                    (_, newDifficulty) => {
                         setCourse(new Course(
                             course.id,
                             course.name,
-                            newDifficulty ?? 1,
+                            newDifficulty ?? course.difficulty,
                             [...course.availableInSemesters],
                             [...course.dependencies],
                         ));
@@ -93,14 +102,18 @@ export default function CourseEditor(
 
             </StyledRating>
             <Typography component="legend">זמין בסמסטרים</Typography>
-            <FormGroup row>
+            <FormGroup row sx={{
+                display: "flex",
+                flexDirection: "row",
+                justifyContent: "space-between",
+            }}>
                 {
                     Array.from("אבג").map(l => (
                         <FormControlLabel
                             control={
                                 <Checkbox
                                     onChange={semesterCheckboxChecked(l as YearPart)}
-                                checked={course.availableInSemesters.includes(l as YearPart)} />
+                                    checked={course.availableInSemesters.includes(l as YearPart)}/>
                             }
                             label={`${l}'`}
                             key={l}
@@ -108,6 +121,6 @@ export default function CourseEditor(
                     ))
                 }
             </FormGroup>
-        </Stack>
+        </Grid>
     );
 }

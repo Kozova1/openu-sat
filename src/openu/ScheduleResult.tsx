@@ -1,14 +1,24 @@
 import {Course, Semester} from "./types.ts";
-import {Dispatch, SetStateAction, useState} from "react";
-import {solveSchedule} from "./course-solver.ts";
+import {Dispatch, SetStateAction, useEffect, useState} from "react";
+import {ScheduleState, solveSchedule} from "./course-solver.ts";
 import Button from "@mui/material/Button";
+import {
+    Accordion,
+    AccordionDetails,
+    AccordionSummary,
+    LinearProgress,
+    List,
+    ListItem,
+    ListItemText,
+    Typography
+} from "@mui/material";
 
 export default function ScheduleResult({semesters, coursesState, setCoursesState}: {
     semesters: Semester[],
     coursesState: Course[],
     setCoursesState: Dispatch<SetStateAction<Course[]>>
 }) {
-    const [sat, setSat] = useState<"sat" | "unsat" | "בטעינה" | "יש ללחוץ על 'חשב שוב'">("יש ללחוץ על 'חשב שוב'");
+    const [sat, setSat] = useState<ScheduleState>(ScheduleState.Uninitialized);
 
     async function solveScheduleComponent() {
         const data = await solveSchedule({
@@ -22,42 +32,55 @@ export default function ScheduleResult({semesters, coursesState, setCoursesState
     }
 
     function isSolverRunning() {
-        return sat === "בטעינה";
+        return sat === ScheduleState.Solving;
     }
 
     function runSolver() {
-        setSat("בטעינה");
+        setSat(ScheduleState.Solving);
         solveScheduleComponent().catch(console.error);
     }
 
+    useEffect(runSolver, []);
+
     return (
         <>
-            <h1>מצב הלו"ז: {sat}</h1>
-            <Button onClick={runSolver} disabled={isSolverRunning()}>חשב שוב</Button>
-            <table>
-                <thead>
-                <tr>
-                    <th scope="col">סמסטר</th>
-                    <th scope="col">קורסים</th>
-                </tr>
-                </thead>
-                <tbody>
+            <Typography variant="h2">מצב הלו"ז: {sat}</Typography>
+            {
+                (isSolverRunning())
+                    ? (<LinearProgress/>)
+                    : (<></>)
+            }
+            <Button onClick={runSolver} disabled={isSolverRunning()}>חשב שנית</Button>
+            <List
+                sx={{
+                    height: 300,
+                    overflow: "auto"
+                }}
+            >
                 {
-                    ...semesters.map(sem => (
-                        <tr>
-                            <th scope="row">{sem.toString()}</th>
-                            {
-                                coursesState
-                                    .filter(c => c.chosenSemester === sem)
-                                    .map(course => (<td key={course.id}>{course.toString()}</td>))
-                            }
-                        </tr>
-                    ))
+                    ...semesters.map(semester => {
+                        const relevantCourses = coursesState
+                            .filter(course => course.chosenSemester === semester)
+                            .map(course => (<ListItemText
+                                key={course.id}>{course.toString()}</ListItemText>));
+
+                        return relevantCourses.length > 0 ? (
+                            <ListItem key={semester.toString()}>
+                                <Accordion sx={{width: "100%"}}>
+                                    <AccordionSummary>{semester.toString()}</AccordionSummary>
+                                    <AccordionDetails>
+                                        <List>
+                                            {
+                                                relevantCourses
+                                            }
+                                        </List>
+                                    </AccordionDetails>
+                                </Accordion>
+                            </ListItem>
+                        ) : (<></>);
+                    })
                 }
-                <tr>
-                </tr>
-                </tbody>
-            </table>
+            </List>
         </>
     )
 }

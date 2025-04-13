@@ -21,6 +21,28 @@ export class Semester {
 
         return `${this.year}${this.part}`;
     }
+
+    next(): Semester {
+        switch (this.part) {
+            case "א":
+                return new Semester(this.year, "ב");
+            case "ב":
+                return new Semester(this.year, "ג");
+            case "ג":
+                return new Semester(this.year + 1, "א");
+        }
+    }
+
+    previous(): Semester {
+        switch (this.part) {
+            case "א":
+                return new Semester(this.year - 1, "ג");
+            case "ב":
+                return new Semester(this.year, "א");
+            case "ג":
+                return new Semester(this.year, "ב");
+        }
+    }
 }
 
 export class Course {

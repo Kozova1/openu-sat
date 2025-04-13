@@ -1,4 +1,4 @@
-import {Course} from "./types.ts";
+import {Course, Semester} from "./types.ts";
 
 export const defaultCourses = [
     new Course("20476", "מתמטיקה בדידה", 6, ["א", "ב", "ג"]),
@@ -16,4 +16,13 @@ export const defaultCourses = [
     new Course("20466", " לוגיקה למדעי המחשב", 1, ["א", "ב"], ["20476"]),
     new Course("20594", "מערכות הפעלה", 7, ["א", "ב"], ["20465", "20407"]),
     new Course("20905", "שפות תכנות", 3, ["ב"], ["20407", "20604", "20417", "20465"]),
-]
+];
+
+const defaultSemestersCount = 10;
+const firstSemester = new Semester(new Date().getFullYear() + 1, "א");
+const semesters = [firstSemester];
+[...Array(defaultSemestersCount).keys()].forEach(_ => {
+    semesters.push(semesters[semesters.length - 1].next());
+});
+
+export const defaultSemesters = semesters;
