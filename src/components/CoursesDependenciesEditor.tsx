@@ -9,7 +9,7 @@ import {
     TextField,
     Typography
 } from "@mui/material";
-import {Course} from "./types.ts";
+import {Course} from "../openu/types.ts";
 import {Dispatch, SetStateAction} from "react";
 
 

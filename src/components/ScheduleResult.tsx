@@ -1,6 +1,6 @@
-import {Course, Semester} from "./types.ts";
+import {Course, Semester} from "../openu/types.ts";
 import {Dispatch, SetStateAction, useEffect, useState} from "react";
-import {ScheduleState, solveSchedule} from "./course-solver.ts";
+import {ScheduleState, solveSchedule} from "../openu/course-solver.ts";
 import Button from "@mui/material/Button";
 import {
     Accordion,
@@ -24,9 +24,7 @@ export default function ScheduleResult({semesters, coursesState, setCoursesState
         const data = await solveSchedule({
             semesters,
             coursesState,
-            setCoursesState,
-            maxCoursesPerSemester: 3,
-            maxSemesterDifficulty: 10,
+            setCoursesState
         });
         setSat(data);
     }
@@ -37,6 +35,15 @@ export default function ScheduleResult({semesters, coursesState, setCoursesState
 
     function runSolver() {
         setSat(ScheduleState.Solving);
+        setCoursesState(courses => courses.map(course =>
+            new Course(
+                course.id,
+                course.name,
+                course.difficulty,
+                [...course.availableInSemesters],
+                [...course.dependencies],
+            )
+        ))
         solveScheduleComponent().catch(console.error);
     }
 

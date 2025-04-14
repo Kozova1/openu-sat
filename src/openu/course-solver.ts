@@ -1,9 +1,8 @@
 import Z3 from "./z3-consts.ts"
-import {Course, Difficulty, Semester} from "./types.ts";
+import {Course, Semester} from "./types.ts";
 import {
     CoursesComeAfterDependencies,
     CoursesInPossibleSemesters,
-    MaxCoursesPerSemester,
     SemesterDifficultyCapped
 } from "./constraints.ts";
 import {Max} from "./z3-utils.ts";
@@ -17,12 +16,10 @@ export enum ScheduleState {
 }
 
 export async function solveSchedule(
-    {semesters, coursesState, setCoursesState, maxSemesterDifficulty, maxCoursesPerSemester}: {
+    {semesters, coursesState, setCoursesState}: {
         semesters: Semester[],
         coursesState: Course[],
-        setCoursesState: Dispatch<SetStateAction<Course[]>>,
-        maxSemesterDifficulty: Difficulty,
-        maxCoursesPerSemester: number
+        setCoursesState: Dispatch<SetStateAction<Course[]>>
     }
 ): Promise<ScheduleState> {
     const courses = coursesState.map(course => new Course(
@@ -42,14 +39,11 @@ export async function solveSchedule(
     // All courses must be taken in given semesters
     solver.add(...CoursesInPossibleSemesters(courses, semesters));
 
-    // No more than maxCoursesPerSemester courses per semester
-    solver.add(...MaxCoursesPerSemester(courses, maxCoursesPerSemester));
-
     // Courses with dependencies come after their dependencies
     solver.add(...CoursesComeAfterDependencies(courses));
 
     // Difficulty of any semester does not exceed maxSemesterDifficulty
-    solver.add(...SemesterDifficultyCapped(semesters, courses, maxSemesterDifficulty));
+    solver.add(...SemesterDifficultyCapped(semesters, courses));
 
     // Goal is to get the minimal end time
     solver.minimize(

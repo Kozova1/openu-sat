@@ -1,4 +1,4 @@
-import {Course, YearPart} from "./types.ts";
+import {Course, YearPart} from "../openu/types.ts";
 import {ChangeEvent, Dispatch, SetStateAction} from "react";
 import {
     Checkbox,

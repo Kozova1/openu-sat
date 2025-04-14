@@ -7,6 +7,7 @@ export type YearPart = "א" | "ב" | "ג";
 export class Semester {
     year!: number;
     part!: YearPart;
+    maxDifficulty!: Difficulty;
 
     constructor(year: number, semester: string) {
         this.year = year;
@@ -15,10 +16,10 @@ export class Semester {
         } else {
             throw Error(`Semester ${semester} is not a valid semester`);
         }
+        this.maxDifficulty = 10;
     }
 
     toString(): string {
-
         return `${this.year}${this.part}`;
     }
 

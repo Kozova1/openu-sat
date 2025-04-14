@@ -1,8 +1,8 @@
 import {ReactNode, useState} from 'react'
 import './App.css'
 import {Course, Semester} from "./openu/types.ts";
-import ScheduleResult from "./openu/ScheduleResult.tsx";
-import CoursesEditor from "./openu/CoursesEditor.tsx";
+import ScheduleResult from "./components/ScheduleResult.tsx";
+import CoursesEditor from "./components/CoursesEditor.tsx";
 import {createTheme, ThemeProvider} from "@mui/material/styles";
 import {CacheProvider} from '@emotion/react';
 import createCache from '@emotion/cache';
@@ -11,8 +11,8 @@ import rtlPlugin from 'stylis-plugin-rtl';
 import {Box, CssBaseline, Step, StepLabel, Stepper} from "@mui/material";
 import {defaultCourses, defaultSemesters} from "./openu/defaults.ts";
 import Button from "@mui/material/Button";
-import SemestersEditor from "./openu/SemestersEditor.tsx";
-import CoursesDependenciesEditor from "./openu/CoursesDependenciesEditor.tsx";
+import SemestersEditor from "./components/SemestersEditor.tsx";
+import CoursesDependenciesEditor from "./components/CoursesDependenciesEditor.tsx";
 
 enum EditingState {
     ChooseSemesters,
@@ -64,8 +64,7 @@ function App() {
         [EditingState.ChooseCourses, coursesEditor],
         [EditingState.SetCourseDependencies, coursesDependenciesEditor],
         [EditingState.ObserveResults, scheduleResult],
-    ])
-
+    ]);
 
     return (
         <ThemeProvider theme={theme}>

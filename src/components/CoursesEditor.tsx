@@ -1,5 +1,5 @@
 import {Dispatch, SetStateAction, useState} from "react";
-import {Course} from "./types.ts";
+import {Course} from "../openu/types.ts";
 import CourseEditor from "./CourseEditor.tsx";
 import {IconButton, ListItem, ListItemText, List} from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
