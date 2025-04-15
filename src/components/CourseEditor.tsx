@@ -1,13 +1,14 @@
 import {Course, YearPart} from "../openu/types.ts";
-import {ChangeEvent, Dispatch, SetStateAction} from "react";
+import {ChangeEvent, Dispatch, ReactNode, SetStateAction} from "react";
 import {
+    Card,
     Checkbox,
     FormControlLabel,
-    FormGroup, Grid,
+    FormGroup, Grid, IconButton,
     Rating,
     styled,
     TextField,
-    Typography
+    Typography, useMediaQuery, useTheme
 } from "@mui/material";
 
 const StyledRating = styled(Rating)({
@@ -20,11 +21,18 @@ const StyledRating = styled(Rating)({
 });
 
 export default function CourseEditor(
-    {courses, setCourses, courseIndex}: {
+    {courses, setCourses, courseIndex, button}: {
         courses: Course[],
         setCourses: Dispatch<SetStateAction<Course[]>>,
         courseIndex: number,
+        button?: {
+            onClick: () => void,
+            icon: ReactNode
+        }
     }) {
+
+    const theme = useTheme();
+    const isVeryWide = useMediaQuery(theme.breakpoints.up("xl"));
 
     const course = courses[courseIndex];
 
@@ -65,62 +73,125 @@ export default function CourseEditor(
     }
 
     return (
-        <Grid container spacing={2}>
-            <TextField size="small" variant="outlined" label="מספר הקורס" value={course.id} onChange={event => {
-                setCourse(new Course(
-                    event.target.value,
-                    course.name,
-                    course.difficulty,
-                    [...course.availableInSemesters],
-                    [...course.dependencies],
-                ));
-            }}></TextField>
-            <TextField size="small" variant="outlined" label="שם הקורס" value={course.name} onChange={event => {
-                setCourse(new Course(
-                    course.id,
-                    event.target.value,
-                    course.difficulty,
-                    [...course.availableInSemesters],
-                    [...course.dependencies],
-                ));
-            }}></TextField>
-            <Typography component="legend">קושי</Typography>
-            <StyledRating
-                max={10}
-                value={course.difficulty}
-                onChange={
-                    (_, newDifficulty) => {
+        <Card
+            sx={{
+                padding: "1rem",
+            }}
+        >
+            <Grid
+                container
+                spacing={2}
+                direction={isVeryWide ? "row" : "column"}
+                alignItems={isVeryWide ? "center" : "flex-start"}
+            >
+                <TextField
+                    size="small"
+                    variant="outlined"
+                    label="מספר הקורס"
+                    value={course.id}
+                    onChange={event => {
                         setCourse(new Course(
-                            course.id,
+                            event.target.value,
                             course.name,
-                            newDifficulty ?? course.difficulty,
+                            course.difficulty,
                             [...course.availableInSemesters],
                             [...course.dependencies],
                         ));
-                    }
-                }>
+                    }}
+                />
 
-            </StyledRating>
-            <Typography component="legend">זמין בסמסטרים</Typography>
-            <FormGroup row sx={{
-                display: "flex",
-                flexDirection: "row",
-                justifyContent: "space-between",
-            }}>
-                {
-                    Array.from("אבג").map(l => (
-                        <FormControlLabel
-                            control={
-                                <Checkbox
-                                    onChange={semesterCheckboxChecked(l as YearPart)}
-                                    checked={course.availableInSemesters.includes(l as YearPart)}/>
+                <TextField
+                    size="small"
+                    variant="outlined"
+                    label="שם הקורס"
+                    value={course.name}
+                    onChange={event => {
+                        setCourse(new Course(
+                            course.id,
+                            event.target.value,
+                            course.difficulty,
+                            [...course.availableInSemesters],
+                            [...course.dependencies],
+                        ));
+                    }}
+                />
+
+                <Grid
+                    container
+                    direction={isVeryWide ? "row" : "column"}
+                    alignItems={isVeryWide ? "center" : "flex-start"}
+                >
+                    <Typography component="legend">קושי</Typography>
+                    <StyledRating
+                        max={10}
+                        value={course.difficulty}
+                        onChange={
+                            (_, newDifficulty) => {
+                                setCourse(new Course(
+                                    course.id,
+                                    course.name,
+                                    newDifficulty ?? course.difficulty,
+                                    [...course.availableInSemesters],
+                                    [...course.dependencies],
+                                ));
                             }
-                            label={`${l}'`}
-                            key={l}
-                        />
-                    ))
-                }
-            </FormGroup>
-        </Grid>
+                        }
+                    />
+                </Grid>
+
+                <Grid
+                    container
+                    direction={isVeryWide ? "row" : "column"}
+                    alignItems={isVeryWide ? "center" : "flex-start"}
+                >
+                    <Typography component="legend">מוצע בסמסטרים</Typography>
+                    <Grid
+                        container
+                        direction="row"
+                        alignItems="center"
+                        justifyContent="space-between"
+                    >
+                        <FormGroup>
+                            <Grid
+                                container
+                                direction="row"
+                            >
+                                <Grid>
+                                    {
+                                        Array.from("אבג").map(l => (
+                                            <FormControlLabel
+                                                control={
+                                                    <Checkbox
+                                                        onChange={semesterCheckboxChecked(l as YearPart)}
+                                                        checked={course.availableInSemesters.includes(l as YearPart)}/>
+                                                }
+                                                label={`${l}'`}
+                                                key={l}
+                                            />
+                                        ))
+                                    }
+                                </Grid>
+                            </Grid>
+                        </FormGroup>
+                        {
+                            (button !== undefined)
+                                ? (
+                                    <IconButton
+                                        sx={{
+                                            alignSelf: "flex-end"
+                                        }}
+                                        onClick={button.onClick}
+                                    >
+                                        {button.icon}
+                                    </IconButton>
+                                )
+                                : (
+                                    <></>
+                                )
+                        }
+                    </Grid>
+                </Grid>
+            </Grid>
+        </Card>
     );
 }

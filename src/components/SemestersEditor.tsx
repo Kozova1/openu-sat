@@ -1,12 +1,11 @@
 import {Semester} from "../openu/types.ts";
 import {Dispatch, SetStateAction} from "react";
 import {
-    Box,
+    Box, Grid,
     List,
     ListItem,
     ListItemText,
     Slider, SliderValueLabel, SliderValueLabelProps,
-    Stack,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import Button from "@mui/material/Button";
@@ -30,15 +29,18 @@ export default function SemestersEditor({semesters, setSemesters}: {
     }
 
     return (
-        <Stack spacing={2}>
-            <Button
-                variant="contained"
-                component="label"
-                startIcon={<AddIcon />}
-                onClick={addPreviousSemester}
-            >
-                הוסף סמסטר קודם
-            </Button>
+        <Grid container direction="column" spacing={2}>
+            <Grid>
+                <Button
+                    variant="contained"
+                    component="label"
+                    startIcon={<AddIcon />}
+                    onClick={addPreviousSemester}
+                >
+                    הוסף סמסטר קודם
+                </Button>
+            </Grid>
+            <Grid>
             <List
                 sx={{
                     overflow: "auto",
@@ -79,6 +81,8 @@ export default function SemestersEditor({semesters, setSemesters}: {
                     ))
                 }
             </List>
+            </Grid>
+            <Grid>
             <Button
                 variant="contained"
                 component="label"
@@ -87,6 +91,7 @@ export default function SemestersEditor({semesters, setSemesters}: {
             >
                 הוסף סמסטר הבא
             </Button>
-        </Stack>
+        </Grid>
+        </Grid>
     );
 }

@@ -8,7 +8,7 @@ import {CacheProvider} from '@emotion/react';
 import createCache from '@emotion/cache';
 import {prefixer} from 'stylis';
 import rtlPlugin from 'stylis-plugin-rtl';
-import {Box, CssBaseline, Step, StepLabel, Stepper} from "@mui/material";
+import {Box, CssBaseline, Grid, Stack, Step, StepLabel, Stepper} from "@mui/material";
 import {defaultCourses, defaultSemesters} from "./openu/defaults.ts";
 import Button from "@mui/material/Button";
 import SemestersEditor from "./components/SemestersEditor.tsx";
@@ -70,28 +70,23 @@ function App() {
         <ThemeProvider theme={theme}>
             <CssBaseline/>
             <CacheProvider value={rtlCache}>
-                <Box>
-                    <Box sx={{width: "100%"}}>
-                        <Stepper activeStep={editingState}>
-                            {
-                                Array.from(editingStateToStageName.entries()).map(([stage, stageName]) => (
-                                    <Step
-                                        disabled={stage === EditingState.ObserveResults ? editingState !== EditingState.ObserveResults : false}>
-                                        <StepLabel onClick={() => setEditingState(stage)}>{stageName}</StepLabel>
-                                    </Step>
-                                ))
-                            }
-                        </Stepper>
-                    </Box>
-                    <Box padding={2}>
-                        {stageToElement.get(editingState)!}
-                    </Box>
-                    <Box
-                        sx={{
-                            display: "flex",
-                            flexDirection: "row",
-                            justifyContent: "space-between"
-                        }}
+                <Stack>
+                    <Stepper activeStep={editingState}>
+                        {
+                            Array.from(editingStateToStageName.entries()).map(([stage, stageName]) => (
+                                <Step
+                                    disabled={stage === EditingState.ObserveResults ? editingState !== EditingState.ObserveResults : false}>
+                                    <StepLabel>{stageName}</StepLabel>
+                                </Step>
+                            ))
+                        }
+                    </Stepper>
+                    {stageToElement.get(editingState)!}
+                    <Grid
+                        container
+                        direction="row"
+                        justifyContent="space-between"
+                        size={12}
                     >
                         {(editingState === 0)
                             ? (<Box></Box>)
@@ -120,8 +115,8 @@ function App() {
                                     </Button>
                                 )
                         }
-                    </Box>
-                </Box>
+                    </Grid>
+                </Stack>
             </CacheProvider>
         </ThemeProvider>
     )

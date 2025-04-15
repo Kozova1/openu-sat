@@ -1,11 +1,6 @@
 import {
     Autocomplete,
-    Checkbox,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableRow,
+    Checkbox, Grid, Stack,
     TextField,
     Typography
 } from "@mui/material";
@@ -93,24 +88,25 @@ export default function CoursesDependenciesEditor({courses, setCourses}: {
     courses: Course[],
 }) {
     return (
-        <TableContainer>
-            <Table>
-                <TableBody>
-                    {
-                        courses.map(course => (
-                            <TableRow key={course.id}>
-                                <TableCell>
-                                    <Typography component="label">{course.toString()}</Typography>
-                                </TableCell>
-                                <TableCell>
-                                    <CourseDependencyEditor courses={courses} setCourses={setCourses}
-                                                            courseId={course.id}/>
-                                </TableCell>
-                            </TableRow>
-                        ))
-                    }
-                </TableBody>
-            </Table>
-        </TableContainer>
+        <Stack
+            spacing={2}
+        >
+            {
+                courses.map(course => (
+                    <Grid container key={course.id}>
+                        <Grid size={4}>
+                            <Typography component="label">{course.toString()}</Typography>
+                        </Grid>
+                        <Grid size={7}>
+                            <CourseDependencyEditor
+                                courses={courses}
+                                setCourses={setCourses}
+                                courseId={course.id}
+                            />
+                        </Grid>
+                    </Grid>
+                ))
+            }
+        </Stack>
     )
 }
