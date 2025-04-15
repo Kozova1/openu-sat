@@ -141,16 +141,19 @@ export default function CourseEditor(
 
                 <Grid
                     container
-                    direction={isVeryWide ? "row" : "column"}
+                    direction="row"
                     alignItems={isVeryWide ? "center" : "flex-start"}
                 >
-                    <Typography component="legend">מוצע בסמסטרים</Typography>
                     <Grid
                         container
-                        direction="row"
-                        alignItems="center"
-                        justifyContent="space-between"
+                        direction="column"
+                        justifyContent="center"
+                        alignItems="flex-start"
+                        size={isVeryWide ? 4 : 12}
                     >
+                        <Typography component="legend">מוצע בסמסטר</Typography>
+                    </Grid>
+                    <Grid size={isVeryWide ? 7 : 10}>
                         <FormGroup>
                             <Grid
                                 container
@@ -162,10 +165,11 @@ export default function CourseEditor(
                                             <FormControlLabel
                                                 control={
                                                     <Checkbox
+                                                        // size="small"
                                                         onChange={semesterCheckboxChecked(l as YearPart)}
                                                         checked={course.availableInSemesters.includes(l as YearPart)}/>
                                                 }
-                                                label={`${l}'`}
+                                                label={`${l}`}
                                                 key={l}
                                             />
                                         ))
@@ -173,6 +177,8 @@ export default function CourseEditor(
                                 </Grid>
                             </Grid>
                         </FormGroup>
+                    </Grid>
+                    <Grid size={1}>
                         {
                             (button !== undefined)
                                 ? (
