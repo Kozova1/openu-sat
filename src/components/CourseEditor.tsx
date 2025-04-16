@@ -89,6 +89,7 @@ export default function CourseEditor(
                     variant="outlined"
                     label="מספר הקורס"
                     value={course.id}
+                    fullWidth={!isVeryWide}
                     onChange={event => {
                         setCourse(new Course(
                             event.target.value,
@@ -105,6 +106,7 @@ export default function CourseEditor(
                     variant="outlined"
                     label="שם הקורס"
                     value={course.name}
+                    fullWidth={!isVeryWide}
                     onChange={event => {
                         setCourse(new Course(
                             course.id,
@@ -120,23 +122,28 @@ export default function CourseEditor(
                     container
                     direction={isVeryWide ? "row" : "column"}
                     alignItems={isVeryWide ? "center" : "flex-start"}
+                    width="100%"
                 >
                     <Typography component="legend">קושי</Typography>
-                    <StyledRating
-                        max={10}
-                        value={course.difficulty}
-                        onChange={
-                            (_, newDifficulty) => {
-                                setCourse(new Course(
-                                    course.id,
-                                    course.name,
-                                    newDifficulty ?? course.difficulty,
-                                    [...course.availableInSemesters],
-                                    [...course.dependencies],
-                                ));
+                    <Grid
+                        alignSelf={isVeryWide ? "flex-start" : "center"}
+                    >
+                        <StyledRating
+                            max={10}
+                            value={course.difficulty}
+                            onChange={
+                                (_, newDifficulty) => {
+                                    setCourse(new Course(
+                                        course.id,
+                                        course.name,
+                                        newDifficulty ?? course.difficulty,
+                                        [...course.availableInSemesters],
+                                        [...course.dependencies],
+                                    ));
+                                }
                             }
-                        }
-                    />
+                        />
+                    </Grid>
                 </Grid>
 
                 <Grid
@@ -178,7 +185,7 @@ export default function CourseEditor(
                             </Grid>
                         </FormGroup>
                     </Grid>
-                    <Grid size={1}>
+                    <Grid size={1} justifySelf="flex-end">
                         {
                             (button !== undefined)
                                 ? (
