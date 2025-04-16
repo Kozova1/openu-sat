@@ -49,7 +49,7 @@ export default function CoursesEditor({courses, setCourses}: {
                 courses.map((course, i) => (
                     <Grid
                         size={courseEditorSize}
-                        key={course.id}
+                        key={i}
                     >
                         <CourseEditor
                             setCourses={setCourses}
@@ -59,7 +59,7 @@ export default function CoursesEditor({courses, setCourses}: {
                                 icon: (<DeleteIcon/>),
                                 onClick: () => {
                                     setCourses(
-                                        prev => prev.filter(course2 => courses[i].id !== course2.id)
+                                        prev => prev.filter(course2 => course.id !== course2.id)
                                     );
                                 }
                             }}
