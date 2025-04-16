@@ -1,5 +1,5 @@
 import {Course, YearPart} from "../openu/types.ts";
-import {ChangeEvent, Dispatch, ReactNode, SetStateAction} from "react";
+import {ChangeEvent, Dispatch, memo, ReactNode, SetStateAction} from "react";
 import {
     Card,
     Checkbox,
@@ -20,191 +20,201 @@ const StyledRating = styled(Rating)({
     },
 });
 
-export default function CourseEditor(
-    {courses, setCourses, courseIndex, button}: {
-        courses: Course[],
-        setCourses: Dispatch<SetStateAction<Course[]>>,
-        courseIndex: number,
-        button?: {
-            onClick: () => void,
-            icon: ReactNode
-        }
-    }) {
-
-    const theme = useTheme();
-    const isVeryWide = useMediaQuery(theme.breakpoints.up("xl"));
-
-    const course = courses[courseIndex];
-
-    function setCourse(c: Course) {
-        setCourses(courses.map((originalCourse, i) =>
-            i === courseIndex
-                ? c
-                : originalCourse
-        ));
+type CourseEditorProps = {
+    courses: Course[],
+    setCourses: Dispatch<SetStateAction<Course[]>>,
+    courseIndex: number,
+    button?: {
+        onClick: () => void,
+        icon: ReactNode
     }
+}
 
-    function semesterCheckboxChecked(semester: YearPart) {
-        return (event: ChangeEvent<HTMLInputElement>) => {
-            if (event.target.checked) {
-                if (!course.availableInSemesters.includes(semester)) {
-                    const newAvailableInSemesters = course.availableInSemesters.concat(semester);
-                    setCourse(new Course(
-                        course.id,
-                        course.name,
-                        course.difficulty,
-                        newAvailableInSemesters,
-                        [...course.dependencies],
-                    ));
-                }
-            } else {
-                if (course.availableInSemesters.includes(semester)) {
-                    const newAvailableInSemesters = course.availableInSemesters.filter(sem => sem !== semester);
-                    setCourse(new Course(
-                        course.id,
-                        course.name,
-                        course.difficulty,
-                        newAvailableInSemesters,
-                        [...course.dependencies],
-                    ));
+const CourseEditor = memo(({
+                               courses,
+                               setCourses,
+                               courseIndex,
+                               button
+                           }: CourseEditorProps) => {
+        const theme = useTheme();
+        const isVeryWide = useMediaQuery(theme.breakpoints.up("xl"));
+
+        const course = courses[courseIndex];
+
+        function setCourse(c: Course) {
+            setCourses(courses.map((originalCourse, i) =>
+                i === courseIndex
+                    ? c
+                    : originalCourse
+            ));
+        }
+
+        function semesterCheckboxChecked(semester: YearPart) {
+            return (event: ChangeEvent<HTMLInputElement>) => {
+                if (event.target.checked) {
+                    if (!course.availableInSemesters.includes(semester)) {
+                        const newAvailableInSemesters = course.availableInSemesters.concat(semester);
+                        setCourse(new Course(
+                            course.id,
+                            course.name,
+                            course.difficulty,
+                            newAvailableInSemesters,
+                            [...course.dependencies],
+                        ));
+                    }
+                } else {
+                    if (course.availableInSemesters.includes(semester)) {
+                        const newAvailableInSemesters = course.availableInSemesters.filter(sem => sem !== semester);
+                        setCourse(new Course(
+                            course.id,
+                            course.name,
+                            course.difficulty,
+                            newAvailableInSemesters,
+                            [...course.dependencies],
+                        ));
+                    }
                 }
             }
         }
-    }
 
-    return (
-        <Card
-            sx={{
-                padding: "1rem",
-            }}
-        >
-            <Grid
-                container
-                spacing={2}
-                direction={isVeryWide ? "row" : "column"}
-                alignItems={isVeryWide ? "center" : "flex-start"}
+        return (
+            <Card
+                sx={{
+                    padding: "1rem",
+                }}
             >
-                <TextField
-                    size="small"
-                    variant="outlined"
-                    label="מספר הקורס"
-                    value={course.id}
-                    fullWidth={!isVeryWide}
-                    onChange={event => {
-                        setCourse(new Course(
-                            event.target.value,
-                            course.name,
-                            course.difficulty,
-                            [...course.availableInSemesters],
-                            [...course.dependencies],
-                        ));
-                    }}
-                />
-
-                <TextField
-                    size="small"
-                    variant="outlined"
-                    label="שם הקורס"
-                    value={course.name}
-                    fullWidth={!isVeryWide}
-                    onChange={event => {
-                        setCourse(new Course(
-                            course.id,
-                            event.target.value,
-                            course.difficulty,
-                            [...course.availableInSemesters],
-                            [...course.dependencies],
-                        ));
-                    }}
-                />
-
                 <Grid
                     container
+                    spacing={2}
                     direction={isVeryWide ? "row" : "column"}
                     alignItems={isVeryWide ? "center" : "flex-start"}
-                    width="100%"
                 >
-                    <Typography component="legend">קושי</Typography>
-                    <Grid
-                        alignSelf={isVeryWide ? "flex-start" : "center"}
-                    >
-                        <StyledRating
-                            max={10}
-                            value={course.difficulty}
-                            onChange={
-                                (_, newDifficulty) => {
-                                    setCourse(new Course(
-                                        course.id,
-                                        course.name,
-                                        newDifficulty ?? course.difficulty,
-                                        [...course.availableInSemesters],
-                                        [...course.dependencies],
-                                    ));
-                                }
-                            }
-                        />
-                    </Grid>
-                </Grid>
+                    <TextField
+                        size="small"
+                        variant="outlined"
+                        label="מספר הקורס"
+                        value={course.id}
+                        fullWidth={!isVeryWide}
+                        onChange={event => {
+                            setCourse(new Course(
+                                event.target.value,
+                                course.name,
+                                course.difficulty,
+                                [...course.availableInSemesters],
+                                [...course.dependencies],
+                            ));
+                        }}
+                    />
 
-                <Grid
-                    container
-                    direction="row"
-                    alignItems={isVeryWide ? "center" : "flex-start"}
-                >
+                    <TextField
+                        size="small"
+                        variant="outlined"
+                        label="שם הקורס"
+                        value={course.name}
+                        fullWidth={!isVeryWide}
+                        onChange={event => {
+                            setCourse(new Course(
+                                course.id,
+                                event.target.value,
+                                course.difficulty,
+                                [...course.availableInSemesters],
+                                [...course.dependencies],
+                            ));
+                        }}
+                    />
+
                     <Grid
                         container
-                        direction="column"
-                        justifyContent="center"
-                        alignItems="flex-start"
-                        size={isVeryWide ? 4 : 12}
+                        direction={isVeryWide ? "row" : "column"}
+                        alignItems={isVeryWide ? "center" : "flex-start"}
+                        width="100%"
                     >
-                        <Typography component="legend">מוצע בסמסטר</Typography>
-                    </Grid>
-                    <Grid size={isVeryWide ? 7 : 10}>
-                        <FormGroup>
-                            <Grid
-                                container
-                                direction="row"
-                            >
-                                <Grid>
-                                    {
-                                        Array.from("אבג").map(l => (
-                                            <FormControlLabel
-                                                control={
-                                                    <Checkbox
-                                                        // size="small"
-                                                        onChange={semesterCheckboxChecked(l as YearPart)}
-                                                        checked={course.availableInSemesters.includes(l as YearPart)}/>
-                                                }
-                                                label={`${l}`}
-                                                key={l}
-                                            />
-                                        ))
+                        <Typography component="legend">קושי</Typography>
+                        <Grid
+                            alignSelf={isVeryWide ? "flex-start" : "center"}
+                        >
+                            <StyledRating
+                                max={10}
+                                value={course.difficulty}
+                                onChange={
+                                    (_, newDifficulty) => {
+                                        setCourse(new Course(
+                                            course.id,
+                                            course.name,
+                                            newDifficulty ?? course.difficulty,
+                                            [...course.availableInSemesters],
+                                            [...course.dependencies],
+                                        ));
                                     }
-                                </Grid>
-                            </Grid>
-                        </FormGroup>
+                                }
+                            />
+                        </Grid>
                     </Grid>
-                    <Grid size={1} justifySelf="flex-end">
-                        {
-                            (button !== undefined)
-                                ? (
-                                    <IconButton
-                                        sx={{
-                                            alignSelf: "flex-end"
-                                        }}
-                                        onClick={button.onClick}
-                                    >
-                                        {button.icon}
-                                    </IconButton>
-                                )
-                                : (
-                                    <></>
-                                )
-                        }
+
+                    <Grid
+                        container
+                        direction="row"
+                        alignItems={isVeryWide ? "center" : "flex-start"}
+                    >
+                        <Grid
+                            container
+                            direction="column"
+                            justifyContent="center"
+                            alignItems="flex-start"
+                            size={isVeryWide ? 4 : 12}
+                        >
+                            <Typography component="legend">מוצע בסמסטר</Typography>
+                        </Grid>
+                        <Grid size={isVeryWide ? 7 : 10}>
+                            <FormGroup>
+                                <Grid
+                                    container
+                                    direction="row"
+                                >
+                                    <Grid>
+                                        {
+                                            Array.from("אבג").map(l => (
+                                                <FormControlLabel
+                                                    control={
+                                                        <Checkbox
+                                                            // size="small"
+                                                            onChange={semesterCheckboxChecked(l as YearPart)}
+                                                            checked={course.availableInSemesters.includes(l as YearPart)}/>
+                                                    }
+                                                    label={`${l}`}
+                                                    key={l}
+                                                />
+                                            ))
+                                        }
+                                    </Grid>
+                                </Grid>
+                            </FormGroup>
+                        </Grid>
+                        <Grid size={1} justifySelf="flex-end">
+                            {
+                                (button !== undefined)
+                                    ? (
+                                        <IconButton
+                                            sx={{
+                                                alignSelf: "flex-end"
+                                            }}
+                                            onClick={button.onClick}
+                                        >
+                                            {button.icon}
+                                        </IconButton>
+                                    )
+                                    : (
+                                        <></>
+                                    )
+                            }
+                        </Grid>
                     </Grid>
                 </Grid>
-            </Grid>
-        </Card>
-    );
-}
+            </Card>
+        );
+    },
+    (oldProps, newProps) =>
+        oldProps.courses[oldProps.courseIndex] === (newProps.courses[newProps.courseIndex]),
+);
+
+export default CourseEditor;
