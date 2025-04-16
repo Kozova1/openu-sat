@@ -1,5 +1,5 @@
 import {Course, YearPart} from "../openu/types.ts";
-import {ChangeEvent, Dispatch, memo, ReactNode, SetStateAction} from "react";
+import {ChangeEvent, memo, ReactNode} from "react";
 import {
     Card,
     Checkbox,
@@ -21,9 +21,8 @@ const StyledRating = styled(Rating)({
 });
 
 type CourseEditorProps = {
-    courses: Course[],
-    setCourses: Dispatch<SetStateAction<Course[]>>,
-    courseIndex: number,
+    course: Course,
+    setCourse: (course: Course) => void,
     button?: {
         onClick: () => void,
         icon: ReactNode
@@ -31,23 +30,12 @@ type CourseEditorProps = {
 }
 
 const CourseEditor = memo(({
-                               courses,
-                               setCourses,
-                               courseIndex,
+                               course,
+                               setCourse,
                                button
                            }: CourseEditorProps) => {
         const theme = useTheme();
         const isVeryWide = useMediaQuery(theme.breakpoints.up("xl"));
-
-        const course = courses[courseIndex];
-
-        function setCourse(c: Course) {
-            setCourses(courses.map((originalCourse, i) =>
-                i === courseIndex
-                    ? c
-                    : originalCourse
-            ));
-        }
 
         function semesterCheckboxChecked(semester: YearPart) {
             return (event: ChangeEvent<HTMLInputElement>) => {
@@ -212,9 +200,7 @@ const CourseEditor = memo(({
                 </Grid>
             </Card>
         );
-    },
-    (oldProps, newProps) =>
-        oldProps.courses[oldProps.courseIndex] === (newProps.courses[newProps.courseIndex]),
+    }
 );
 
 export default CourseEditor;

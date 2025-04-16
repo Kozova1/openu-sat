@@ -69,6 +69,17 @@ export class Course {
         this.availableInSemesters = availableInSemesters;
     }
 
+    equals(other: Course): boolean {
+        return (this.id === other.id) &&
+            (this.name === other.name) &&
+            (this.difficulty === other.difficulty) &&
+            (this.availableInSemesters === other.availableInSemesters);
+    }
+
+    static arraysEqual(a: Course[], b: Course[]): boolean {
+        return (a.length === b.length) && a.every((ai, i) => ai.equals(b[i]));
+    }
+
     toString(): string {
         return `${this.id} - ${this.name}`;
     }
