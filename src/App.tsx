@@ -3,30 +3,27 @@ import './App.css'
 import {Course, Semester} from "./openu/types.ts";
 import ScheduleResult from "./components/ScheduleResult.tsx";
 import {Box, Grid, Stack, Step, StepLabel, Stepper} from "@mui/material";
-import {defaultCourses, defaultSemesters} from "./openu/defaults.ts";
+import {initialCourses, defaultSemesters} from "./openu/defaults.ts";
 import Button from "@mui/material/Button";
 import SemestersEditor from "./components/SemestersEditor.tsx";
-import CoursesDependenciesEditor from "./components/CoursesDependenciesEditor.tsx";
 import {CourseAction, handleCourseAction} from './openu/courses-state.ts';
 import {CoursesEditor} from "./components/CoursesEditor.tsx";
 
 enum EditingState {
     ChooseSemesters,
     ChooseCourses,
-    SetCourseDependencies,
     ObserveResults,
 }
 
 const editingStateToStageName = new Map<EditingState, string>([
     [EditingState.ChooseSemesters, "בחירת סמסטרים"],
     [EditingState.ChooseCourses, "בחירת קורסים"],
-    [EditingState.SetCourseDependencies, "הגדרת דרישות קורסים"],
     [EditingState.ObserveResults, "צפייה בתוצאות"],
 ]);
 
 
 function App() {
-    const [coursesState, dispatchCourses] = useReducer<Course[], [CourseAction]>(handleCourseAction, defaultCourses);
+    const [coursesState, dispatchCourses] = useReducer<Course[], [CourseAction]>(handleCourseAction, initialCourses);
     const [semestersState, setSemestersState] = useState<Semester[]>(defaultSemesters);
     const [editingState, setEditingState] = useState<EditingState>(1);
 
@@ -35,9 +32,6 @@ function App() {
     );
     const coursesEditor = ( // TODO: maybe find way to add "add course" button in column headers instead of separate ugly toolbar
         <CoursesEditor courses={coursesState} dispatchCourses={dispatchCourses} />
-    );
-    const coursesDependenciesEditor = ( // TODO: remove this (add to CoursesEditor)
-        <CoursesDependenciesEditor courses={coursesState} dispatchCourses={dispatchCourses}/>
     );
     // TODO: refactor to not modify the global state, this is ugly. Maybe keep a separate state for a solution,
     // synchronizing using useEffect maybe for the SAT?
@@ -48,7 +42,6 @@ function App() {
     const stageToElement = new Map<EditingState, ReactNode>([
         [EditingState.ChooseSemesters, semestersEditor],
         [EditingState.ChooseCourses, coursesEditor],
-        [EditingState.SetCourseDependencies, coursesDependenciesEditor],
         [EditingState.ObserveResults, scheduleResult],
     ]);
 

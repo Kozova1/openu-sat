@@ -6,14 +6,23 @@ import {
     GridRenderCellParams,
     GridRowModes,
     GridRowModesModel,
-    GridRowParams, GridSlotProps, Toolbar,
-    ToolbarButton,
+    GridRowParams,
     useGridApiContext
 } from "@mui/x-data-grid";
 import {Course, YearPart} from "../openu/types.ts";
 import {CourseAction, createDefaultCourse} from "../openu/courses-state.ts";
 import {ActionDispatch, useCallback, useMemo, useRef, useState} from "react";
-import {Box, Checkbox, FormControlLabel, Rating, styled, Tooltip} from "@mui/material";
+import {
+    Autocomplete,
+    Box,
+    Checkbox,
+    FormControlLabel,
+    IconButton,
+    Rating,
+    styled,
+    TextField,
+    Tooltip
+} from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
 
@@ -135,37 +144,79 @@ function EditSemesters(props: GridRenderCellParams<Course, string[]>) {
     )
 }
 
-declare module "@mui/x-data-grid" {
-    interface ToolbarPropsOverrides {
-        dispatchCourses: ActionDispatch<[CourseAction]>;
-        setRowModesModel: (
-            newModel: (oldModel: GridRowModesModel) => GridRowModesModel
-        ) => void;
-    }
-}
 
-function EditToolbar({dispatchCourses, setRowModesModel}: GridSlotProps['toolbar']) {
-    const handleClick = () => {
-        const newCourse = createDefaultCourse();
-        dispatchCourses({
-            type: "AddCourse",
-            course: newCourse,
-        });
-        setRowModesModel(model => ({
-            ...model,
-            [newCourse.id]: {mode: GridRowModes.Edit, fieldToFocus: "name"}
-        }));
-    };
+const DependenciesAutocomplete = styled(Autocomplete<Course, true>)({
+    "& .MuiAutocomplete-inputRoot:not(.Mui-expanded)": {
+        flexWrap: "nowrap",
+    },
+    paddingTop: "0.2rem"
+})
+
+function CourseDependencyEditor(params: GridRenderCellParams<Course, string[]>) {
+    const course = params.row;
+    const {id, field} = params;
+    const apiRef = useGridApiContext();
+    const courses: Course[] = apiRef.current.getAllRowIds().map(apiRef.current.getRow);
+
+    function doesRecursivelyRequire(maybeRequires: Course): boolean {
+        let toCheckQueue = [maybeRequires];
+
+        while (toCheckQueue.length > 0) {
+            const dependencies = toCheckQueue.flatMap(
+                course => course.dependencies.map(
+                    depId => courses.find(c => c.id === depId)!
+                )
+            );
+
+            for (const toCheck of toCheckQueue) {
+                if (toCheck.id === course.id) {
+                    return true;
+                }
+            }
+
+            toCheckQueue = dependencies;
+        }
+
+        return false;
+    }
 
     return (
-        <Toolbar>
-            <Tooltip title="הוסף קורס">
-                <ToolbarButton onClick={handleClick}>
-                    <AddIcon />
-                </ToolbarButton>
-            </Tooltip>
-        </Toolbar>
-    );
+        <Box sx={{display: "flex", alignItems: "center", justifyContent: "center", paddingY: 2, width: "100%"}}>
+            <DependenciesAutocomplete
+                multiple
+                disableCloseOnSelect
+                fullWidth
+                limitTags={1}
+                getOptionLabel={option => option!.toString()}
+                options={courses.filter(currentCourse => !doesRecursivelyRequire(currentCourse))}
+                value={
+                    course.dependencies
+                        .map(depId => courses.find(c => c.id === depId))
+                        .filter(course => course !== undefined)
+                }
+                renderInput={(params) => (
+                    <TextField {...params} label="דרישות" />
+                )}
+                renderOption={(props, option, {selected}) => {
+                    const {key, ...optionProps} = props;
+                    return (
+                        <li key={key} {...optionProps}>
+                            <Checkbox
+                                checked={selected}
+                            />
+                            {option!.toString()}
+                        </li>
+                    );
+                }}
+                sx={{ flexWrap: "nowrap", overflowX: "hidden" }}
+                onChange={(_, dependencies: Course[]) => {
+                    apiRef.current.setEditCellValue({
+                        id, field, value: dependencies
+                    })
+                }}
+            />
+        </Box>
+    )
 }
 
 export function CoursesEditor({courses, dispatchCourses}: CoursesEditorProps) {
@@ -181,8 +232,30 @@ export function CoursesEditor({courses, dispatchCourses}: CoursesEditorProps) {
         [dispatchCourses]
     );
 
+    const addCourse = useCallback(
+        () => {
+        const newCourse = createDefaultCourse();
+        dispatchCourses({
+            type: "AddCourse",
+            course: newCourse,
+        });
+        setRowModesModel(model => ({
+            ...model,
+            [newCourse.id]: {mode: GridRowModes.Edit, fieldToFocus: "name"}
+        }));
+    },
+        [dispatchCourses]
+    );
+
     const coursesColumns: GridColDef[] = useMemo(
         () => [
+            {
+                field: "isActive",
+                headerName: "הקורס נלמד",
+                type: "boolean",
+                display: "flex",
+                editable: true,
+            },
             {
                 field: "courseId",
                 headerName: "מספר הקורס",
@@ -213,31 +286,45 @@ export function CoursesEditor({courses, dispatchCourses}: CoursesEditorProps) {
                 renderEditCell: EditSemesters
             },
             {
+                field: "dependencies",
+                headerName: "דרישות קודמות",
+                type: "custom",
+                editable: true,
+                display: "flex",
+                renderCell: CourseDependencyEditor,
+                renderEditCell: CourseDependencyEditor
+            },
+            {
                 field: "actions",
                 type: "actions",
+                renderHeader: () => (
+                    <Tooltip title="הוסף קורס">
+                        <IconButton onClick={addCourse}>
+                            <AddIcon/>
+                        </IconButton>
+                    </Tooltip>
+                ),
                 getActions(params: GridRowParams) {
                     return [
                         <GridActionsCellItem
                             icon={<DeleteIcon/>}
-                            label="מחק"
+                            label="מחק קורס"
                             onClick={() => deleteCourse(params.row.id)}
                         />
                     ];
                 }
-            }
-        ], [deleteCourse]
+            },
+        ], [deleteCourse, addCourse]
     );
 
     return (
         <DataGrid
             rows={courses}
             columns={coursesColumns}
+            getRowHeight={() => "auto"}
             editMode="row"
             rowModesModel={rowModesModel}
             onRowModesModelChange={setRowModesModel}
-            slots={{ toolbar: EditToolbar }}
-            slotProps={{toolbar: {dispatchCourses, setRowModesModel }}}
-            showToolbar
             processRowUpdate={(newRow: Course) => {
                 dispatchCourses({
                     type: "UpdateCourse",

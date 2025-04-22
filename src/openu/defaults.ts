@@ -1,9 +1,8 @@
 import {Course, Semester} from "./types.ts";
 
-export const defaultCourses = [
+const defaultCourses = [
     new Course(crypto.randomUUID(), "20476", "מתמטיקה בדידה", 6, ["א", "ב", "ג"]),
     new Course(crypto.randomUUID(), "20109", "אלגברה לינארית 1", 8, ["א", "ב", "ג"]),
-    new Course(crypto.randomUUID(), "20229", "אלגברה לינארית 2", 7, ["א", "ב", "ג"], ["20109"]),
     new Course(crypto.randomUUID(), "20474", "חשבון אינפיניטסימלי 1", 7, ["א", "ב", "ג"]),
     new Course(crypto.randomUUID(), "20475", "חשבון אינפיניטסימלי 2", 9, ["א", "ב", "ג"], ["20474"]),
     new Course(crypto.randomUUID(), "20425", "הסתברות ומבוא לסטטיסטיקה למדעי המחשב", 4, ["א", "ב", "ג"]),
@@ -18,10 +17,18 @@ export const defaultCourses = [
     new Course(crypto.randomUUID(), "20905", "שפות תכנות", 3, ["ב"], ["20407", "20604", "20417", "20465"]),
 ];
 
+defaultCourses.forEach((course: Course) => {
+    course.dependencies = course.dependencies.map(
+        depCourseId => defaultCourses.find(candidateCourse => candidateCourse.courseId === depCourseId)!
+    ).map(dependency => dependency.id);
+});
+
+export const initialCourses = defaultCourses;
+
 const defaultSemestersCount = 10;
 const firstSemester = new Semester(new Date().getFullYear() + 1, "א");
 const semesters = [firstSemester];
-[...Array(defaultSemestersCount).keys()].forEach(_ => {
+[...Array(defaultSemestersCount).keys()].forEach(() => {
     semesters.push(semesters[semesters.length - 1].next());
 });
 

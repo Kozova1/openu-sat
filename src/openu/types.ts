@@ -1,5 +1,3 @@
-import {Arith} from "z3-solver";
-
 export type CourseId = string;
 export type Difficulty = number;
 export type YearPart = "א" | "ב" | "ג";
@@ -47,40 +45,58 @@ export class Semester {
 }
 
 export class Course {
-    id!: string
-    courseId!: CourseId;
-    name!: string;
-    difficulty!: Difficulty;
-    availableInSemesters!: YearPart[];
+    id: string
+    courseId: CourseId;
+    name: string;
+    difficulty: Difficulty;
+    availableInSemesters: YearPart[];
     dependencies: CourseId[] = [];
-    satVar?: Arith = undefined;
-    chosenSemester?: Semester = undefined;
+    isActive: boolean;
 
     constructor(
-        immutableId: string,
-        id: CourseId,
+        id: string,
+        courseId: CourseId,
         name: string,
         difficulty: Difficulty,
         availableInSemesters: YearPart[],
         dependencies: CourseId[] = [],
+        isActive: boolean = true
     ) {
-        this.id = immutableId;
-        this.courseId = id;
+        this.id = id;
+        this.courseId = courseId;
         this.name = name;
         this.difficulty = difficulty;
         this.dependencies = dependencies;
         this.availableInSemesters = availableInSemesters;
+        this.isActive = isActive;
     }
 
-    equals(other: Course): boolean {
-        return (this.courseId === other.courseId) &&
-            (this.name === other.name) &&
-            (this.difficulty === other.difficulty) &&
-            (this.availableInSemesters === other.availableInSemesters);
-    }
+    with(params: {
+        courseId?: string,
+        name?: string,
+        difficulty?: Difficulty,
+        availableInSemesters?: YearPart[],
+        dependencies?: CourseId[],
+        isActive?: boolean
+    }) {
+        const {
+            courseId,
+            name,
+            difficulty,
+            dependencies,
+            availableInSemesters,
+            isActive
+        } = params;
 
-    static arraysEqual(a: Course[], b: Course[]): boolean {
-        return (a.length === b.length) && a.every((ai, i) => ai.equals(b[i]));
+        return new Course(
+            this.id,
+            courseId ?? this.courseId,
+            name ?? this.name,
+            difficulty ?? this.difficulty,
+            availableInSemesters ?? [...this.availableInSemesters],
+            dependencies ?? [...this.dependencies],
+            isActive ?? this.isActive,
+        );
     }
 
     toString(): string {
