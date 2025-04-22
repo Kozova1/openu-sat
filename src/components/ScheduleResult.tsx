@@ -13,10 +13,10 @@ import {
     Typography
 } from "@mui/material";
 
-export default function ScheduleResult({semesters, coursesState, setCoursesState}: {
+export default function ScheduleResult({semesters, coursesState, dispatchCourses}: {
     semesters: Semester[],
     coursesState: Course[],
-    setCoursesState: Dispatch<SetStateAction<Course[]>>
+    dispatchCourses: Dispatch<SetStateAction<Course[]>>
 }) {
     const [sat, setSat] = useState<ScheduleState>(ScheduleState.Uninitialized);
 
@@ -24,7 +24,7 @@ export default function ScheduleResult({semesters, coursesState, setCoursesState
         const data = await solveSchedule({
             semesters,
             coursesState,
-            setCoursesState
+            dispatchCourses: dispatchCourses
         });
         setSat(data);
     }
@@ -35,9 +35,9 @@ export default function ScheduleResult({semesters, coursesState, setCoursesState
 
     function runSolver() {
         setSat(ScheduleState.Solving);
-        setCoursesState(courses => courses.map(course =>
+        dispatchCourses(courses => courses.map(course =>
             new Course(
-                course.id,
+                course.courseId,
                 course.name,
                 course.difficulty,
                 [...course.availableInSemesters],
@@ -69,7 +69,7 @@ export default function ScheduleResult({semesters, coursesState, setCoursesState
                         const relevantCourses = coursesState
                             .filter(course => course.chosenSemester === semester)
                             .map(course => (<ListItemText
-                                key={course.id}>{course.toString()}</ListItemText>));
+                                key={course.courseId}>{course.toString()}</ListItemText>));
 
                         return relevantCourses.length > 0 ? (
                             <ListItem key={semester.toString()}>

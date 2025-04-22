@@ -47,7 +47,8 @@ export class Semester {
 }
 
 export class Course {
-    id!: CourseId;
+    id!: string
+    courseId!: CourseId;
     name!: string;
     difficulty!: Difficulty;
     availableInSemesters!: YearPart[];
@@ -56,13 +57,15 @@ export class Course {
     chosenSemester?: Semester = undefined;
 
     constructor(
+        immutableId: string,
         id: CourseId,
         name: string,
         difficulty: Difficulty,
         availableInSemesters: YearPart[],
         dependencies: CourseId[] = [],
     ) {
-        this.id = id;
+        this.id = immutableId;
+        this.courseId = id;
         this.name = name;
         this.difficulty = difficulty;
         this.dependencies = dependencies;
@@ -70,7 +73,7 @@ export class Course {
     }
 
     equals(other: Course): boolean {
-        return (this.id === other.id) &&
+        return (this.courseId === other.courseId) &&
             (this.name === other.name) &&
             (this.difficulty === other.difficulty) &&
             (this.availableInSemesters === other.availableInSemesters);
@@ -81,6 +84,6 @@ export class Course {
     }
 
     toString(): string {
-        return `${this.id} - ${this.name}`;
+        return `${this.courseId} - ${this.name}`;
     }
 }

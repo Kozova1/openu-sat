@@ -19,7 +19,7 @@ export function CoursesInPossibleSemesters(courses: Course[], semesters: Semeste
 export function CoursesComeAfterDependencies(courses: Course[]): Bool[] {
     return courses.flatMap(course =>
         courses
-            .filter(course2 => course.dependencies.includes(course2.id))
+            .filter(course2 => course.dependencies.includes(course2.courseId))
             .map(course2 => course.satVar!.gt(course2.satVar!))
     )
 }

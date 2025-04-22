@@ -1,18 +1,14 @@
-import {ReactNode, useState} from 'react'
+import {ReactNode, useReducer, useState} from 'react'
 import './App.css'
 import {Course, Semester} from "./openu/types.ts";
 import ScheduleResult from "./components/ScheduleResult.tsx";
-import CoursesEditor from "./components/CoursesEditor.tsx";
-import {createTheme, ThemeProvider} from "@mui/material/styles";
-import {CacheProvider} from '@emotion/react';
-import createCache from '@emotion/cache';
-import {prefixer} from 'stylis';
-import rtlPlugin from 'stylis-plugin-rtl';
-import {Box, CssBaseline, Grid, Stack, Step, StepLabel, Stepper} from "@mui/material";
+import {Box, Grid, Stack, Step, StepLabel, Stepper} from "@mui/material";
 import {defaultCourses, defaultSemesters} from "./openu/defaults.ts";
 import Button from "@mui/material/Button";
 import SemestersEditor from "./components/SemestersEditor.tsx";
 import CoursesDependenciesEditor from "./components/CoursesDependenciesEditor.tsx";
+import {CourseAction, handleCourseAction} from './openu/courses-state.ts';
+import {CoursesEditor} from "./components/CoursesEditor.tsx";
 
 enum EditingState {
     ChooseSemesters,
@@ -28,35 +24,25 @@ const editingStateToStageName = new Map<EditingState, string>([
     [EditingState.ObserveResults, "צפייה בתוצאות"],
 ]);
 
-const theme = createTheme({
-    direction: "rtl",
-    palette: {
-        mode: "dark",
-    }
-});
-
-// Create rtl cache
-const rtlCache = createCache({
-    key: 'muirtl',
-    stylisPlugins: [prefixer, rtlPlugin],
-});
 
 function App() {
-    const [coursesState, setCoursesState] = useState<Course[]>(defaultCourses);
+    const [coursesState, dispatchCourses] = useReducer<Course[], [CourseAction]>(handleCourseAction, defaultCourses);
     const [semestersState, setSemestersState] = useState<Semester[]>(defaultSemesters);
-    const [editingState, setEditingState] = useState<EditingState>(EditingState.ChooseSemesters);
+    const [editingState, setEditingState] = useState<EditingState>(1);
 
-    const semestersEditor = (
+    const semestersEditor = ( // TODO: make responsive and think of better UI
         <SemestersEditor semesters={semestersState} setSemesters={setSemestersState}/>
     );
-    const coursesEditor = (
-        <CoursesEditor courses={coursesState} setCourses={setCoursesState}/>
+    const coursesEditor = ( // TODO: maybe find way to add "add course" button in column headers instead of separate ugly toolbar
+        <CoursesEditor courses={coursesState} dispatchCourses={dispatchCourses} />
     );
-    const coursesDependenciesEditor = (
-        <CoursesDependenciesEditor courses={coursesState} setCourses={setCoursesState}/>
+    const coursesDependenciesEditor = ( // TODO: remove this (add to CoursesEditor)
+        <CoursesDependenciesEditor courses={coursesState} dispatchCourses={dispatchCourses}/>
     );
+    // TODO: refactor to not modify the global state, this is ugly. Maybe keep a separate state for a solution,
+    // synchronizing using useEffect maybe for the SAT?
     const scheduleResult = (
-        <ScheduleResult semesters={semestersState} coursesState={coursesState} setCoursesState={setCoursesState}/>
+        <ScheduleResult semesters={semestersState} coursesState={coursesState} />
     );
 
     const stageToElement = new Map<EditingState, ReactNode>([
@@ -67,58 +53,53 @@ function App() {
     ]);
 
     return (
-        <ThemeProvider theme={theme}>
-            <CssBaseline/>
-            <CacheProvider value={rtlCache}>
-                <Stack>
-                    <Stepper activeStep={editingState}>
-                        {
-                            Array.from(editingStateToStageName.entries()).map(([stage, stageName]) => (
-                                <Step
-                                    disabled={stage === EditingState.ObserveResults ? editingState !== EditingState.ObserveResults : false}>
-                                    <StepLabel>{stageName}</StepLabel>
-                                </Step>
-                            ))
-                        }
-                    </Stepper>
-                    {stageToElement.get(editingState)!}
-                    <Grid
-                        container
-                        direction="row"
-                        justifyContent="space-between"
-                        size={12}
-                    >
-                        {(editingState === 0)
-                            ? (<Box></Box>)
-                            : (
-                                <Button
-                                    onClick={() => setEditingState(oldState => oldState - 1)}
-                                    variant="contained"
-                                >
-                                    חזור
-                                </Button>
-                            )
-                        }
-                        {
-                            (editingState === EditingState.ObserveResults)
-                                ? (<Box></Box>)
-                                : (
-                                    <Button
-                                        onClick={() => setEditingState(oldState => oldState + 1)}
-                                        variant="contained"
-                                    >
-                                        {
-                                            (editingState === EditingState.ObserveResults - 1)
-                                                ? "סיים וחשב"
-                                                : "המשך"
-                                        }
-                                    </Button>
-                                )
-                        }
-                    </Grid>
-                </Stack>
-            </CacheProvider>
-        </ThemeProvider>
+        <Stack>
+            <Stepper activeStep={editingState}>
+                {
+                    Array.from(editingStateToStageName.entries()).map(([stage, stageName]) => (
+                        <Step
+                            disabled={stage === EditingState.ObserveResults ? editingState !== EditingState.ObserveResults : false}>
+                            <StepLabel>{stageName}</StepLabel>
+                        </Step>
+                    ))
+                }
+            </Stepper>
+            {stageToElement.get(editingState)!}
+            <Grid
+                container
+                direction="row"
+                justifyContent="space-between"
+                size={12}
+            >
+                {(editingState === 0)
+                    ? (<Box></Box>)
+                    : (
+                        <Button
+                            onClick={() => setEditingState(oldState => oldState - 1)}
+                            variant="contained"
+                        >
+                            חזור
+                        </Button>
+                    )
+                }
+                {
+                    (editingState === EditingState.ObserveResults)
+                        ? (<Box></Box>)
+                        : (
+                            <Button
+                                onClick={() => setEditingState(oldState => oldState + 1)}
+                                variant="contained"
+                            >
+                                {
+                                    (editingState === EditingState.ObserveResults - 1)
+                                        ? "סיים וחשב"
+                                        : "המשך"
+                                }
+                            </Button>
+                        )
+                }
+            </Grid>
+        </Stack>
     )
 }
 

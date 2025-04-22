@@ -23,7 +23,7 @@ export async function solveSchedule(
     }
 ): Promise<ScheduleState> {
     const courses = coursesState.map(course => new Course(
-        course.id,
+        course.courseId,
         course.name,
         course.difficulty,
         [...course.availableInSemesters],
@@ -31,7 +31,7 @@ export async function solveSchedule(
     ))
 
     courses.forEach(course => {
-        course.satVar = Z3.Int.const(course.id);
+        course.satVar = Z3.Int.const(course.courseId);
     })
 
     const solver = new Z3.Optimize();

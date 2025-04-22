@@ -5,19 +5,24 @@ import {
     Typography
 } from "@mui/material";
 import {Course} from "../openu/types.ts";
-import {Dispatch, SetStateAction} from "react";
+import {ActionDispatch} from "react";
+import {CourseAction} from "../openu/courses-state.ts";
 
 
-function CourseDependencyEditor({courses, setCourses, courseId}: {
-                                    courses: Course[],
-                                    setCourses: Dispatch<SetStateAction<Course[]>>,
-                                    courseId: string
-                                }
+export function CourseDependencyEditor(
+    {courses, dispatchCourses, courseId}: {
+        courses: Course[],
+        dispatchCourses: ActionDispatch<[CourseAction]>,
+        courseId: string
+    }
 ) {
-    const course = courses.find((course) => course.id === courseId)!;
+    const course = courses.find((course) => course.courseId === courseId)!;
 
-    function setCourse(c: Course) {
-        setCourses(courses.map(originalCourse => originalCourse.id === courseId ? c : originalCourse));
+    function setCourse(course: Course) {
+        dispatchCourses({
+            type: "UpdateCourse",
+            course: course,
+        })
     }
 
     function doesRecursivelyRequire(maybeRequires: Course): boolean {
@@ -26,12 +31,12 @@ function CourseDependencyEditor({courses, setCourses, courseId}: {
         while (toCheckQueue.length > 0) {
             const dependencies = toCheckQueue.flatMap(
                 course => course.dependencies.map(
-                    depId => courses.find(c => c.id === depId)!
+                    depId => courses.find(c => c.courseId === depId)!
                 )
             );
 
             for (const toCheck of toCheckQueue) {
-                if (toCheck.id === course.id) {
+                if (toCheck.courseId === course.courseId) {
                     return true;
                 }
             }
@@ -49,7 +54,7 @@ function CourseDependencyEditor({courses, setCourses, courseId}: {
             limitTags={2}
             fullWidth
             options={courses.filter(currentCourse => !doesRecursivelyRequire(currentCourse))}
-            value={course.dependencies.map(depId => courses.find(c => c.id === depId))}
+            value={course.dependencies.map(depId => courses.find(c => c.courseId === depId))}
             getOptionLabel={option => option!.toString()}
             size="small"
             sx={{
@@ -72,6 +77,7 @@ function CourseDependencyEditor({courses, setCourses, courseId}: {
             onChange={(_, value) => {
                 setCourse(new Course(
                     course.id,
+                    course.courseId,
                     course.name,
                     course.difficulty,
                     [...course.availableInSemesters],
@@ -83,8 +89,8 @@ function CourseDependencyEditor({courses, setCourses, courseId}: {
 }
 
 
-export default function CoursesDependenciesEditor({courses, setCourses}: {
-    setCourses: Dispatch<SetStateAction<Course[]>>,
+export default function CoursesDependenciesEditor({courses, dispatchCourses}: {
+    dispatchCourses: ActionDispatch<[CourseAction]>,
     courses: Course[],
 }) {
     return (
@@ -93,15 +99,15 @@ export default function CoursesDependenciesEditor({courses, setCourses}: {
         >
             {
                 courses.map(course => (
-                    <Grid container key={course.id}>
+                    <Grid container key={course.courseId}>
                         <Grid size={4}>
                             <Typography component="label">{course.toString()}</Typography>
                         </Grid>
                         <Grid size={7}>
                             <CourseDependencyEditor
                                 courses={courses}
-                                setCourses={setCourses}
-                                courseId={course.id}
+                                dispatchCourses={dispatchCourses}
+                                courseId={course.courseId}
                             />
                         </Grid>
                     </Grid>
