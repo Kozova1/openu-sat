@@ -25,18 +25,17 @@ const editingStateToStageName = new Map<EditingState, string>([
 function App() {
     const [coursesState, dispatchCourses] = useReducer<Course[], [CourseAction]>(handleCourseAction, initialCourses);
     const [semestersState, setSemestersState] = useState<Semester[]>(defaultSemesters);
-    const [editingState, setEditingState] = useState<EditingState>(1);
+    const [editingState, setEditingState] = useState<EditingState>(EditingState.ChooseSemesters);
 
-    const semestersEditor = ( // TODO: make responsive and think of better UI
+    const semestersEditor = (
         <SemestersEditor semesters={semestersState} setSemesters={setSemestersState}/>
     );
-    const coursesEditor = ( // TODO: maybe find way to add "add course" button in column headers instead of separate ugly toolbar
+    const coursesEditor = ( // TODO: a bit laggy but mostly works - maybe find way to fix this.
         <CoursesEditor courses={coursesState} dispatchCourses={dispatchCourses} />
     );
-    // TODO: refactor to not modify the global state, this is ugly. Maybe keep a separate state for a solution,
     // synchronizing using useEffect maybe for the SAT?
     const scheduleResult = (
-        <ScheduleResult semesters={semestersState} coursesState={coursesState} />
+        <ScheduleResult semesters={semestersState} courses={coursesState} />
     );
 
     const stageToElement = new Map<EditingState, ReactNode>([

@@ -5,8 +5,6 @@ import {
     Checkbox,
     FormControlLabel,
     FormGroup, Grid, IconButton,
-    Rating,
-    styled,
     TextField,
     Typography, useMediaQuery, useTheme
 } from "@mui/material";

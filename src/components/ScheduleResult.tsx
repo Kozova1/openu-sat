@@ -1,6 +1,6 @@
 import {Course, Semester} from "../openu/types.ts";
-import {Dispatch, SetStateAction, useEffect, useState} from "react";
-import {ScheduleState, solveSchedule} from "../openu/course-solver.ts";
+import {useEffect, useState} from "react";
+import {CourseAssignments, ScheduleState, solveSchedule} from "../openu/course-solver.ts";
 import Button from "@mui/material/Button";
 import {
     Accordion,
@@ -13,21 +13,12 @@ import {
     Typography
 } from "@mui/material";
 
-export default function ScheduleResult({semesters, coursesState, dispatchCourses}: {
+export default function ScheduleResult({semesters, courses}: {
     semesters: Semester[],
-    coursesState: Course[],
-    dispatchCourses: Dispatch<SetStateAction<Course[]>>
+    courses: Course[]
 }) {
     const [sat, setSat] = useState<ScheduleState>(ScheduleState.Uninitialized);
-
-    async function solveScheduleComponent() {
-        const data = await solveSchedule({
-            semesters,
-            coursesState,
-            dispatchCourses: dispatchCourses
-        });
-        setSat(data);
-    }
+    const [assignments, setAssignments] = useState<CourseAssignments>(new Map());
 
     function isSolverRunning() {
         return sat === ScheduleState.Solving;
@@ -35,19 +26,18 @@ export default function ScheduleResult({semesters, coursesState, dispatchCourses
 
     function runSolver() {
         setSat(ScheduleState.Solving);
-        dispatchCourses(courses => courses.map(course =>
-            new Course(
-                course.courseId,
-                course.name,
-                course.difficulty,
-                [...course.availableInSemesters],
-                [...course.dependencies],
-            )
-        ))
-        solveScheduleComponent().catch(console.error);
+        (async () => {
+            const [satisfiability, assignments] = await solveSchedule({
+                semesters,
+                courses
+            });
+
+            setSat(satisfiability);
+            setAssignments(assignments ?? new Map());
+        })().catch(console.error);
     }
 
-    useEffect(runSolver, []);
+    useEffect(runSolver, [courses, semesters]);
 
     return (
         <>
@@ -66,25 +56,31 @@ export default function ScheduleResult({semesters, coursesState, dispatchCourses
             >
                 {
                     ...semesters.map(semester => {
-                        const relevantCourses = coursesState
-                            .filter(course => course.chosenSemester === semester)
-                            .map(course => (<ListItemText
-                                key={course.courseId}>{course.toString()}</ListItemText>));
+                        const relevantCourses = (assignments.get(semester) ?? [])
+                            .map(course => (
+                                <ListItemText
+                                    key={course.courseId}
+                                >
+                                    {course.toString()}
+                                </ListItemText>
+                            ));
 
-                        return relevantCourses.length > 0 ? (
-                            <ListItem key={semester.toString()}>
-                                <Accordion sx={{width: "100%"}}>
-                                    <AccordionSummary>{semester.toString()}</AccordionSummary>
-                                    <AccordionDetails>
-                                        <List>
-                                            {
-                                                relevantCourses
-                                            }
-                                        </List>
-                                    </AccordionDetails>
-                                </Accordion>
-                            </ListItem>
-                        ) : (<></>);
+                        return relevantCourses.length > 0
+                            ? (
+                                <ListItem key={semester.toString()}>
+                                    <Accordion sx={{width: "100%"}}>
+                                        <AccordionSummary>{semester.toString()}</AccordionSummary>
+                                        <AccordionDetails>
+                                            <List>
+                                                {
+                                                    relevantCourses
+                                                }
+                                            </List>
+                                        </AccordionDetails>
+                                    </Accordion>
+                                </ListItem>
+                            )
+                            : (<></>);
                     })
                 }
             </List>

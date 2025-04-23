@@ -1,9 +1,11 @@
 import {Course, Semester} from "./types.ts";
-import {Bool} from "z3-solver";
+import {Arith, Bool} from "z3-solver";
 import Z3 from "./z3-consts.ts";
 
 
-export function CoursesInPossibleSemesters(courses: Course[], semesters: Semester[]): Bool[] {
+type SatVars = Map<string, Arith>;
+
+export function CoursesInPossibleSemesters(satVars: SatVars, courses: Course[], semesters: Semester[]): Bool[] {
     return courses.map(course => {
         const validSemesters = semesters
             .filter(semester => semester.maxDifficulty >= Math.min(...courses.map(course => course.difficulty)))
@@ -11,26 +13,26 @@ export function CoursesInPossibleSemesters(courses: Course[], semesters: Semeste
             .map(semester => semesters.findIndex(sem => sem === semester));
 
         return Z3.Or(...validSemesters.map(
-            semester => course.satVar!.eq(semester)
+            semester => satVars.get(course.id)!.eq(semester)
         ))
     });
 }
 
-export function CoursesComeAfterDependencies(courses: Course[]): Bool[] {
+export function CoursesComeAfterDependencies(satVars: SatVars, courses: Course[]): Bool[] {
     return courses.flatMap(course =>
         courses
             .filter(course2 => course.dependencies.includes(course2.courseId))
-            .map(course2 => course.satVar!.gt(course2.satVar!))
+            .map(course2 => satVars.get(course.id)!.gt(satVars.get(course2.id)!))
     )
 }
 
-export function SemesterDifficultyCapped(semesters: Semester[], courses: Course[]): Bool[] {
+export function SemesterDifficultyCapped(satVars: SatVars, semesters: Semester[], courses: Course[]): Bool[] {
     return semesters
         .filter(semester => semester.maxDifficulty >= Math.min(...courses.map(course => course.difficulty)))
         .map((semester, i) => {
 
         const coursesDifficultyIfRelevant = courses.map(course =>
-            Z3.If(course.satVar!.eq(i), Z3.Int.val(course.difficulty), Z3.Int.val(0))
+            Z3.If(satVars.get(course.id)!.eq(i), Z3.Int.val(course.difficulty), Z3.Int.val(0))
         );
         return Z3.Sum(
             coursesDifficultyIfRelevant[0],
