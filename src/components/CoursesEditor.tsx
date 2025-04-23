@@ -41,25 +41,22 @@ type CoursesEditorProps = {
     dispatchCourses: ActionDispatch<[CourseAction]>;
 }
 
-function renderCourseDifficulty({value}: GridRenderCellParams<Course, number>) {
-    return (
-        <Box sx={{display: 'flex', alignItems: 'center', pr: 2}}>
-            <DifficultyRating
-                max={10}
-                value={value}
-                readOnly
-            />
-        </Box>
-    );
-}
-
 function CourseDifficultyEdit(props: GridRenderCellParams<Course, number>) {
-    const {id, value, field, hasFocus} = props;
+    const {value, row, hasFocus} = props;
     const apiRef = useGridApiContext();
     const ref = useRef<HTMLElement>(null);
 
     const handleChange = (_: unknown, newValue: number | null) => {
-        apiRef.current.setEditCellValue({id, field, value: newValue ?? value});
+        apiRef.current.updateRows([
+            new Course(
+                row.id,
+                row.courseId,
+                row.name,
+                newValue ?? row.difficulty,
+                [...row.availableInSemesters],
+                [...row.dependencies]
+            )
+        ]);
     };
 
     useEnhancedEffect(() => {
@@ -84,34 +81,8 @@ function CourseDifficultyEdit(props: GridRenderCellParams<Course, number>) {
     );
 }
 
-const renderCourseDifficultyEditInputCell: GridColDef['renderCell'] = (params) => {
-    return (
-        <CourseDifficultyEdit {...params} />
-    );
-}
-
-function renderSemesters({value}: GridRenderCellParams<Course, string[]>) {
-    return (
-        <Box sx={{display: 'flex', alignItems: 'center', pr: 2}}>
-            {
-                Array.from("אבג").map(l => (
-                    <FormControlLabel
-                        control={
-                            <Checkbox
-                                checked={value?.includes(l as YearPart) ?? false}
-                            />
-                        }
-                        label={`${l}`}
-                        key={l}
-                    />
-                ))
-            }
-        </Box>
-    )
-}
-
 function EditSemesters(props: GridRenderCellParams<Course, string[]>) {
-    const {id, value, field} = props;
+    const {value, row} = props;
     const apiRef = useGridApiContext();
 
     return (
@@ -123,15 +94,20 @@ function EditSemesters(props: GridRenderCellParams<Course, string[]>) {
                             <Checkbox
                                 checked={value?.includes(l as YearPart) ?? false}
                                 onChange={(event) => {
-                                    if (event.target.checked) {
-                                        apiRef.current.setEditCellValue({id, field, value: [...(value ?? []), l]})
-                                    } else {
-                                        apiRef.current.setEditCellValue({
-                                            id,
-                                            field,
-                                            value: value?.filter(sem => sem != l)
-                                        });
-                                    }
+                                    const newSemesters = event.target.checked
+                                        ? [...(value ?? []), l as YearPart]
+                                        : value?.filter(sem => sem != l) ?? [];
+
+                                    apiRef.current.updateRows([
+                                        new Course(
+                                            row.id,
+                                            row.courseId,
+                                            row.name,
+                                            row.difficulty,
+                                            newSemesters as YearPart[],
+                                            [...row.dependencies]
+                                        )
+                                    ])
                                 }}
                             />
                         }
@@ -149,14 +125,18 @@ const DependenciesAutocomplete = styled(Autocomplete<Course, true>)({
     "& .MuiAutocomplete-inputRoot:not(.Mui-expanded)": {
         flexWrap: "nowrap",
     },
-    paddingTop: "0.2rem"
+    paddingTop: "0.2rem",
+    minWidth: "20rem"
 })
 
 function CourseDependencyEditor(params: GridRenderCellParams<Course, string[]>) {
     const course = params.row;
-    const {id, field} = params;
+    const {row} = params;
     const apiRef = useGridApiContext();
-    const courses: Course[] = apiRef.current.getAllRowIds().map(apiRef.current.getRow);
+    const courses: Course[] = apiRef.current
+        .getAllRowIds()
+        .map(apiRef.current.getRow)
+        .filter(course => course !== undefined);
 
     function doesRecursivelyRequire(maybeRequires: Course): boolean {
         let toCheckQueue = [maybeRequires];
@@ -208,15 +188,45 @@ function CourseDependencyEditor(params: GridRenderCellParams<Course, string[]>) 
                         </li>
                     );
                 }}
-                sx={{ flexWrap: "nowrap", overflowX: "hidden" }}
                 onChange={(_, dependencies: Course[]) => {
-                    apiRef.current.setEditCellValue({
-                        id, field, value: dependencies
-                    })
+                    apiRef.current.updateRows([
+                        new Course(
+                            row.id,
+                            row.courseId,
+                            row.name,
+                            row.difficulty,
+                            [...row.availableInSemesters],
+                            dependencies.map(dep => dep.id)
+                        )
+                    ])
                 }}
             />
         </Box>
-    )
+    );
+}
+
+function CourseEnabledCheckbox(params: GridRenderCellParams<Course, boolean>) {
+    const apiRef = useGridApiContext();
+    const {value, row} = params;
+
+    return (
+        <Checkbox
+            checked={value}
+            onChange={(event) => {
+                apiRef.current.updateRows([
+                    new Course(
+                        row.id,
+                        row.courseId,
+                        row.name,
+                        row.difficulty,
+                        [...row.availableInSemesters],
+                        [...row.dependencies],
+                        event.target.checked
+                    )
+                ]);
+            }}
+        />
+    );
 }
 
 export function CoursesEditor({courses, dispatchCourses}: CoursesEditorProps) {
@@ -251,10 +261,10 @@ export function CoursesEditor({courses, dispatchCourses}: CoursesEditorProps) {
         () => [
             {
                 field: "isActive",
-                headerName: "הקורס נלמד",
+                headerName: "הקורס ילמד?",
                 type: "boolean",
                 display: "flex",
-                editable: true,
+                renderCell: CourseEnabledCheckbox
             },
             {
                 field: "courseId",
@@ -271,28 +281,25 @@ export function CoursesEditor({courses, dispatchCourses}: CoursesEditorProps) {
             {
                 field: "difficulty",
                 headerName: "קושי",
-                renderCell: renderCourseDifficulty,
-                renderEditCell: renderCourseDifficultyEditInputCell,
-                editable: true,
+                renderCell: CourseDifficultyEdit,
+                editable: false,
                 display: "flex",
             },
             {
                 field: "availableInSemesters",
                 headerName: "מוצע בסמסטרים",
-                editable: true,
+                editable: false,
                 type: "custom",
                 display: "flex",
-                renderCell: renderSemesters,
-                renderEditCell: EditSemesters
+                renderCell: EditSemesters
             },
             {
                 field: "dependencies",
                 headerName: "דרישות קודמות",
                 type: "custom",
-                editable: true,
+                editable: false,
                 display: "flex",
-                renderCell: CourseDependencyEditor,
-                renderEditCell: CourseDependencyEditor
+                renderCell: CourseDependencyEditor
             },
             {
                 field: "actions",
@@ -323,6 +330,7 @@ export function CoursesEditor({courses, dispatchCourses}: CoursesEditorProps) {
             columns={coursesColumns}
             getRowHeight={() => "auto"}
             editMode="row"
+            autosizeOnMount
             rowModesModel={rowModesModel}
             onRowModesModelChange={setRowModesModel}
             processRowUpdate={(newRow: Course) => {
@@ -339,7 +347,6 @@ export function CoursesEditor({courses, dispatchCourses}: CoursesEditorProps) {
                 });
                 return newRow;
             }}
-            autosizeOnMount
         />
     )
 }
