@@ -107,7 +107,7 @@ function EditSemesters(props: GridRenderCellParams<Course, string[]>) {
 }
 
 
-const DependenciesAutocomplete = styled(Autocomplete<Course, true>)({
+const DependenciesAutocomplete = styled(Autocomplete<string, true>)({
     "& .MuiAutocomplete-inputRoot:not(.Mui-expanded)": {
         flexWrap: "nowrap",
     },
@@ -153,12 +153,17 @@ function CourseDependencyEditor(params: GridRenderCellParams<Course, string[]>) 
                 disableCloseOnSelect
                 fullWidth
                 limitTags={1}
-                getOptionLabel={option => option!.toString()}
-                options={courses.filter(currentCourse => !doesRecursivelyRequire(currentCourse))}
+                getOptionLabel={id => Course.of(apiRef.current.getRow(id)!).toString()}
+                options={
+                    courses
+                        .filter(currentCourse => !doesRecursivelyRequire(currentCourse))
+                        .map(currentCourse => currentCourse.id)
+                }
                 value={
                     course.dependencies
                         .map(apiRef.current.getRow)
                         .filter((course: Course | undefined) => course !== undefined)
+                        .map(course => course.id)
                 }
                 renderInput={(params) => (
                     <TextField {...params} label="דרישות"/>
@@ -170,15 +175,13 @@ function CourseDependencyEditor(params: GridRenderCellParams<Course, string[]>) 
                             <Checkbox
                                 checked={selected}
                             />
-                            {option!.toString()}
+                            {Course.of(apiRef.current.getRow(option)!).toString()}
                         </li>
                     );
                 }}
-                onChange={(_, dependencies: Course[]) => {
+                onChange={(_, dependencies: string[]) => {
                     apiRef.current.updateRows([
-                        Course.of(row).with({
-                            dependencies: dependencies.map(dep => dep.id)
-                        })
+                        Course.of(row).with({dependencies})
                     ])
                 }}
             />
