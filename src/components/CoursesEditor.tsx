@@ -46,18 +46,11 @@ function CourseDifficultyEdit(props: GridRenderCellParams<Course, number>) {
     const apiRef = useGridApiContext();
     const ref = useRef<HTMLElement>(null);
 
-    const handleChange = (_: unknown, newValue: number | null) => {
+    const handleChange = useCallback((_: unknown, newValue: number | null) => {
         apiRef.current.updateRows([
-            new Course(
-                row.id,
-                row.courseId,
-                row.name,
-                newValue ?? row.difficulty,
-                [...row.availableInSemesters],
-                [...row.dependencies]
-            )
+            Course.of(row).with({difficulty: newValue ?? row.difficulty})
         ]);
-    };
+    }, [apiRef, row]);
 
     useEnhancedEffect(() => {
         if (hasFocus && ref.current) {
@@ -99,14 +92,7 @@ function EditSemesters(props: GridRenderCellParams<Course, string[]>) {
                                         : value?.filter(sem => sem != l) ?? [];
 
                                     apiRef.current.updateRows([
-                                        new Course(
-                                            row.id,
-                                            row.courseId,
-                                            row.name,
-                                            row.difficulty,
-                                            newSemesters as YearPart[],
-                                            [...row.dependencies]
-                                        )
+                                        Course.of(row).with({availableInSemesters: newSemesters as YearPart[]})
                                     ])
                                 }}
                             />
@@ -171,11 +157,11 @@ function CourseDependencyEditor(params: GridRenderCellParams<Course, string[]>) 
                 options={courses.filter(currentCourse => !doesRecursivelyRequire(currentCourse))}
                 value={
                     course.dependencies
-                        .map(depId => courses.find(c => c.id === depId))
-                        .filter(course => course !== undefined)
+                        .map(apiRef.current.getRow)
+                        .filter((course: Course | undefined) => course !== undefined)
                 }
                 renderInput={(params) => (
-                    <TextField {...params} label="דרישות" />
+                    <TextField {...params} label="דרישות"/>
                 )}
                 renderOption={(props, option, {selected}) => {
                     const {key, ...optionProps} = props;
@@ -190,14 +176,9 @@ function CourseDependencyEditor(params: GridRenderCellParams<Course, string[]>) 
                 }}
                 onChange={(_, dependencies: Course[]) => {
                     apiRef.current.updateRows([
-                        new Course(
-                            row.id,
-                            row.courseId,
-                            row.name,
-                            row.difficulty,
-                            [...row.availableInSemesters],
-                            dependencies.map(dep => dep.id)
-                        )
+                        Course.of(row).with({
+                            dependencies: dependencies.map(dep => dep.id)
+                        })
                     ])
                 }}
             />
@@ -213,16 +194,9 @@ function CourseEnabledCheckbox(params: GridRenderCellParams<Course, boolean>) {
         <Checkbox
             checked={value}
             onChange={(event) => {
+                console.log("CourseEnabledCheckbox onChange row", row);
                 apiRef.current.updateRows([
-                    new Course(
-                        row.id,
-                        row.courseId,
-                        row.name,
-                        row.difficulty,
-                        [...row.availableInSemesters],
-                        [...row.dependencies],
-                        event.target.checked
-                    )
+                    Course.of(row).with({isActive: event.target.checked})
                 ]);
             }}
         />
@@ -244,16 +218,16 @@ export function CoursesEditor({courses, dispatchCourses}: CoursesEditorProps) {
 
     const addCourse = useCallback(
         () => {
-        const newCourse = createDefaultCourse();
-        dispatchCourses({
-            type: "AddCourse",
-            course: newCourse,
-        });
-        setRowModesModel(model => ({
-            ...model,
-            [newCourse.id]: {mode: GridRowModes.Edit, fieldToFocus: "name"}
-        }));
-    },
+            const newCourse = createDefaultCourse();
+            dispatchCourses({
+                type: "AddCourse",
+                course: newCourse,
+            });
+            setRowModesModel(model => ({
+                ...model,
+                [newCourse.id]: {mode: GridRowModes.Edit, fieldToFocus: "name"}
+            }));
+        },
         [dispatchCourses]
     );
 
@@ -299,7 +273,7 @@ export function CoursesEditor({courses, dispatchCourses}: CoursesEditorProps) {
                 type: "custom",
                 editable: false,
                 display: "flex",
-                renderCell: CourseDependencyEditor
+                renderCell: props => <CourseDependencyEditor {...props} />
             },
             {
                 field: "actions",

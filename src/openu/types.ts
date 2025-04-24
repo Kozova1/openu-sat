@@ -50,7 +50,7 @@ export class Course {
     name: string;
     difficulty: Difficulty;
     availableInSemesters: YearPart[];
-    dependencies: CourseId[] = [];
+    dependencies: string[] = [];
     isActive: boolean;
 
     constructor(
@@ -59,7 +59,7 @@ export class Course {
         name: string,
         difficulty: Difficulty,
         availableInSemesters: YearPart[],
-        dependencies: CourseId[] = [],
+        dependencies: string[] = [],
         isActive: boolean = true
     ) {
         this.id = id;
@@ -71,12 +71,32 @@ export class Course {
         this.isActive = isActive;
     }
 
+    static of(params: {
+        id: string,
+        courseId: CourseId,
+        name: string,
+        difficulty: Difficulty,
+        availableInSemesters: YearPart[],
+        dependencies: string[],
+        isActive: boolean
+    }) {
+        return new Course(
+            params.id,
+            params.courseId,
+            params.name,
+            params.difficulty,
+            [...params.availableInSemesters],
+            [...params.dependencies],
+            params.isActive
+        );
+    }
+
     with(params: {
-        courseId?: string,
+        courseId?: CourseId,
         name?: string,
         difficulty?: Difficulty,
         availableInSemesters?: YearPart[],
-        dependencies?: CourseId[],
+        dependencies?: string[],
         isActive?: boolean
     }) {
         const {
@@ -93,8 +113,8 @@ export class Course {
             courseId ?? this.courseId,
             name ?? this.name,
             difficulty ?? this.difficulty,
-            availableInSemesters ?? [...this.availableInSemesters],
-            dependencies ?? [...this.dependencies],
+            [...(availableInSemesters ?? this.availableInSemesters)],
+            [...(dependencies ?? this.dependencies)],
             isActive ?? this.isActive,
         );
     }

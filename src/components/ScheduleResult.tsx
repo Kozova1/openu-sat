@@ -29,7 +29,7 @@ export default function ScheduleResult({semesters, courses}: {
         (async () => {
             const [satisfiability, assignments] = await solveSchedule({
                 semesters,
-                courses
+                courses: courses.filter(course => course.isActive)
             });
 
             setSat(satisfiability);
@@ -37,7 +37,10 @@ export default function ScheduleResult({semesters, courses}: {
         })().catch(console.error);
     }
 
-    useEffect(runSolver, [courses, semesters]);
+    useEffect(
+        runSolver,
+        [courses, semesters]
+    );
 
     return (
         <>

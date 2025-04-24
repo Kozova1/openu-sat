@@ -38,7 +38,11 @@ export function handleCourseAction(currentState: Course[], action: CourseAction)
             )
         }
         case "DeleteCourse": {
-            return currentState.filter(course => course.id !== action.id);
+            return currentState
+                .filter(course => course.id !== action.id)
+                .map(course => course.with({
+                    dependencies: course.dependencies.filter(dep => dep != action.id)
+                }));
         }
         case "ResetState": {
             return [createDefaultCourse()];

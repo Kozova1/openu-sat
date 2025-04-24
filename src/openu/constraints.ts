@@ -21,7 +21,7 @@ export function CoursesInPossibleSemesters(satVars: SatVars, courses: Course[], 
 export function CoursesComeAfterDependencies(satVars: SatVars, courses: Course[]): Bool[] {
     return courses.flatMap(course =>
         courses
-            .filter(course2 => course.dependencies.includes(course2.courseId))
+            .filter(course2 => course.dependencies.includes(course2.id))
             .map(course2 => satVars.get(course.id)!.gt(satVars.get(course2.id)!))
     )
 }
