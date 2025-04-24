@@ -25,6 +25,7 @@ export default function ScheduleResult({semesters, courses}: {
     }
 
     function runSolver() {
+        setAssignments(new Map());
         setSat(ScheduleState.Solving);
         (async () => {
             const [satisfiability, assignments] = await solveSchedule({
@@ -53,8 +54,8 @@ export default function ScheduleResult({semesters, courses}: {
             <Button onClick={runSolver} disabled={isSolverRunning()}>חשב שנית</Button>
             <List
                 sx={{
-                    height: 300,
-                    overflow: "auto"
+                    height: "100%",
+                    overflow: "scroll"
                 }}
             >
                 {
