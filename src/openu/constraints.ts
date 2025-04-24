@@ -8,6 +8,7 @@ type SatVars = Map<string, Arith>;
 export function CoursesInPossibleSemesters(satVars: SatVars, courses: Course[], semesters: Semester[]): Bool[] {
     return courses.map(course => {
         const validSemesters = semesters
+            // Semesters with a max difficulty lower than the easiest course must not have courses assigned to them
             .filter(semester => semester.maxDifficulty >= Math.min(...courses.map(course => course.difficulty)))
             .filter(semester => course.availableInSemesters.includes(semester.part))
             .map(semester => semesters.findIndex(sem => sem === semester));
@@ -20,9 +21,7 @@ export function CoursesInPossibleSemesters(satVars: SatVars, courses: Course[], 
 
 export function CoursesComeAfterDependencies(satVars: SatVars, courses: Course[]): Bool[] {
     return courses.flatMap(course =>
-        courses
-            .filter(course2 => course.dependencies.includes(course2.id))
-            .map(course2 => satVars.get(course.id)!.gt(satVars.get(course2.id)!))
+        course.dependencies.map(depId => satVars.get(course.id)!.gt(satVars.get(depId)!))
     )
 }
 
